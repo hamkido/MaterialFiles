@@ -53,11 +53,9 @@ val navigationItems: List<NavigationItem?>
                 add(null)
                 addAll(standardDirectoryItems)
             }
-            val bookmarkDirectoryItems = bookmarkDirectoryItems
-            if (bookmarkDirectoryItems.isNotEmpty()) {
-                add(null)
-                addAll(bookmarkDirectoryItems)
-            }
+            add(null)
+            addAll(bookmarkDirectoryItems)
+            add(AddBookmarkItem())
             add(null)
             addAll(menuItems)
         }
@@ -197,6 +195,21 @@ private class AddStorageItem : NavigationItem() {
 
     override fun onClick(listener: Listener) {
         listener.launchIntent(AddStorageDialogActivity::class.createIntent())
+    }
+}
+
+private class AddBookmarkItem : NavigationItem() {
+    override val id: Long = R.string.navigation_add_bookmark.toLong()
+
+    @DrawableRes
+    override val iconRes: Int = R.drawable.add_icon_white_24dp
+
+    override fun getTitle(context: Context): String =
+        context.getString(R.string.navigation_add_bookmark)
+
+    override fun onClick(listener: Listener) {
+        listener.addBookmark()
+        listener.closeNavigationDrawer()
     }
 }
 

@@ -18,16 +18,15 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import java8.nio.file.Path
-import java8.nio.file.Paths
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.AppActivity
 import me.zhanghai.android.files.file.MimeType
+import me.zhanghai.android.files.navigation.NavigationRootMapLiveData
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.createIntent
 import me.zhanghai.android.files.util.extraPath
@@ -131,7 +130,7 @@ class FileListActivity : AppActivity() {
             val titleView = customView.findViewById<TextView>(R.id.tabTitle)
             val closeButton = customView.findViewById<ImageButton>(R.id.tabCloseButton)
 
-            titleView.text = tabs[position].getDisplayTitle()
+            titleView.text = getTabDisplayTitle(tabs[position])
             closeButton.setOnClickListener { closeTab(position) }
             closeButton.isVisible = tabs.size > 1
 
@@ -153,6 +152,11 @@ class FileListActivity : AppActivity() {
         viewPager?.post {
             getCurrentFragment()?.refreshToolbar()
         }
+
+        // Observe NavigationRootMapLiveData to update tab titles when storage names are loaded
+        NavigationRootMapLiveData.observe(this) {
+            updateTabTitles()
+        }
     }
 
     private fun updateTabLayoutVisibility() {
@@ -171,11 +175,20 @@ class FileListActivity : AppActivity() {
                 if (customView != null) {
                     val titleView = customView.findViewById<TextView>(R.id.tabTitle)
                     val closeButton = customView.findViewById<ImageButton>(R.id.tabCloseButton)
-                    titleView?.text = tabs.getOrNull(i)?.getDisplayTitle() ?: ""
+                    titleView?.text = tabs.getOrNull(i)?.let { getTabDisplayTitle(it) } ?: ""
                     closeButton?.isVisible = tabs.size > 1
                 }
             }
         }
+    }
+
+    private fun getTabDisplayTitle(tab: Tab): String {
+        // Check if the path is a navigation root and use its proper name
+        val navigationRoot = NavigationRootMapLiveData.valueCompat[tab.path]
+        if (navigationRoot != null) {
+            return navigationRoot.getName(this)
+        }
+        return tab.getDisplayTitle()
     }
 
     private fun saveTabs() {

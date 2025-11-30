@@ -31,6 +31,7 @@ import me.zhanghai.android.files.file.fileSize
 import me.zhanghai.android.files.file.formatShort
 import me.zhanghai.android.files.file.iconRes
 import me.zhanghai.android.files.file.isApk
+import me.zhanghai.android.files.file.isImage
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.settings.Settings
@@ -404,12 +405,13 @@ class FileListAdapter(
     override val isAnimationEnabled: Boolean
         get() = Settings.FILE_LIST_ANIMATION.valueCompat
 
-    // Check if any file in the current list supports thumbnail preview
+    // Check if any file in the current list is an image (for grid column adjustment)
+    // Only consider actual image files, not APK/PDF/media that also support thumbnails
     val hasThumbnailFiles: Boolean
         get() {
             for (index in 0..<itemCount) {
                 val file = getItem(index)
-                if (file.supportsThumbnail) {
+                if (file.mimeType.isImage) {
                     return true
                 }
             }

@@ -1536,7 +1536,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         addBookmark(file.path)
     }
 
-    private fun addBookmark() {
+    override fun addBookmark() {
         addBookmark(currentPath)
     }
 

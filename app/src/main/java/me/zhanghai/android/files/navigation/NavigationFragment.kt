@@ -76,6 +76,10 @@ class NavigationFragment : Fragment(), NavigationItem.Listener {
         listener.closeNavigationDrawer()
     }
 
+    override fun addBookmark() {
+        listener.addBookmark()
+    }
+
     interface Listener {
         val currentPath: Path
         fun navigateTo(path: Path)
@@ -83,5 +87,6 @@ class NavigationFragment : Fragment(), NavigationItem.Listener {
         fun navigateToDefaultRoot()
         fun observeCurrentPath(owner: LifecycleOwner, observer: (Path) -> Unit)
         fun closeNavigationDrawer()
+        fun addBookmark()
     }
 }
