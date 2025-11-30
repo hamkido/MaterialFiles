@@ -31,7 +31,8 @@ import me.zhanghai.android.files.util.valueCompat
 import java.io.IOException
 
 class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
-    private lateinit var binding: ParentFolderFragmentBinding
+    private var _binding: ParentFolderFragmentBinding? = null
+    private val binding get() = _binding!!
     private lateinit var adapter: ParentFolderAdapter
 
     lateinit var listener: Listener
@@ -39,6 +40,7 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
     private val currentPathLiveData = MutableLiveData<Path>()
     private val parentFilesLiveData = MutableLiveData<Stateful<List<FileItem>>>()
     private var loadJob: Job? = null
+    private var pendingPath: Path? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,7 +48,7 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
         savedInstanceState: Bundle?
     ): View =
         ParentFolderFragmentBinding.inflate(inflater, container, false)
-            .also { binding = it }
+            .also { _binding = it }
             .root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,6 +86,12 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
                 }
             }
         }
+
+        // Apply pending path if set before view was created
+        pendingPath?.let {
+            currentPathLiveData.value = it
+            pendingPath = null
+        }
     }
 
     private fun loadParentFiles(parentPath: Path) {
@@ -114,7 +122,11 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
     }
 
     fun setCurrentPath(path: Path) {
-        currentPathLiveData.value = path
+        if (_binding != null) {
+            currentPathLiveData.value = path
+        } else {
+            pendingPath = path
+        }
     }
 
     override fun onItemClicked(file: FileItem) {
@@ -124,6 +136,7 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
     override fun onDestroyView() {
         super.onDestroyView()
         loadJob?.cancel()
+        _binding = null
     }
 
     interface Listener {

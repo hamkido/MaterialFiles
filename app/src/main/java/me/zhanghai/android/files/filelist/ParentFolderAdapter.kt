@@ -35,7 +35,7 @@ class ParentFolderAdapter(
             ParentFolderItemBinding.inflate(parent.context.layoutInflater, parent, false)
         ).apply {
             binding.itemLayout.background = if (binding.itemLayout.context.isMaterial3Theme) {
-                CheckableItemBackground.create(binding.itemLayout.context)
+                CheckableItemBackground.create(0f, 0f, binding.itemLayout.context)
             } else {
                 null
             }

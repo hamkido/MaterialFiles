@@ -423,17 +423,23 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     override fun onResume() {
         super.onResume()
 
-        // Refresh toolbar when resuming in ViewPager2 to ensure menu is visible
-        val fileListActivity = activity as? FileListActivity
-        if (fileListActivity?.getCurrentFragment() == this) {
-            refreshToolbar()
-        }
+        // Refresh toolbar when resuming to ensure menu is visible after rotation
+        // Use post to ensure the view hierarchy is ready
+        view?.post { refreshToolbar() }
 
         if (!viewModel.isNotificationPermissionRequested) {
             ensureStorageAccess()
         }
         if (!viewModel.isStorageAccessRequested) {
             ensureNotificationPermission()
+        }
+    }
+
+    override fun setMenuVisibility(menuVisible: Boolean) {
+        super.setMenuVisibility(menuVisible)
+        // Refresh toolbar when this fragment becomes visible in ViewPager2
+        if (menuVisible && isResumed) {
+            view?.post { refreshToolbar() }
         }
     }
 
