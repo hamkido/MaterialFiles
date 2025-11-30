@@ -139,7 +139,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     ConfirmDeleteFilesDialogFragment.Listener, CreateArchiveDialogFragment.Listener,
     RenameFileDialogFragment.Listener, CreateFileDialogFragment.Listener,
     CreateDirectoryDialogFragment.Listener, NavigateToPathDialogFragment.Listener,
-    NavigationFragment.Listener, ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
+    NavigationFragment.Listener, ParentFolderFragment.Listener,
+    ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
     ShowRequestNotificationPermissionRationaleDialogFragment.Listener,
     ShowRequestNotificationPermissionInSettingsRationaleDialogFragment.Listener,
     ShowRequestStoragePermissionRationaleDialogFragment.Listener,
@@ -172,6 +173,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     private lateinit var binding: Binding
 
     private lateinit var navigationFragment: NavigationFragment
+    private var parentFolderFragment: ParentFolderFragment? = null
 
     private lateinit var menuBinding: MenuBinding
 
@@ -222,6 +224,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 as NavigationFragment
         }
         navigationFragment.listener = this
+
+        // Setup parent folder sidebar for tablet landscape mode
+        setupSidebarTabs(savedInstanceState)
+
         val activity = requireActivity() as AppCompatActivity
         activity.setTitle(R.string.file_list_title)
         activity.setSupportActionBar(binding.toolbar)
@@ -631,6 +637,48 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         activity.invalidateOptionsMenu()
     }
 
+    private fun setupSidebarTabs(savedInstanceState: Bundle?) {
+        val tabLayout = binding.sidebarTabLayout ?: return
+        val parentFolderContainer = binding.parentFolderFragmentContainer ?: return
+        val navigationContainer = binding.navigationFragmentContainer ?: return
+
+        // Initialize ParentFolderFragment
+        if (savedInstanceState == null) {
+            parentFolderFragment = ParentFolderFragment()
+            childFragmentManager.commit {
+                add(R.id.parentFolderFragment, parentFolderFragment!!)
+            }
+        } else {
+            parentFolderFragment = childFragmentManager.findFragmentById(R.id.parentFolderFragment)
+                as? ParentFolderFragment
+        }
+        parentFolderFragment?.listener = this
+
+        // Add tabs
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.sidebar_tab_navigation))
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.sidebar_tab_parent_folder))
+
+        tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
+                when (tab?.position) {
+                    0 -> {
+                        navigationContainer.isVisible = true
+                        parentFolderContainer.isVisible = false
+                    }
+                    1 -> {
+                        navigationContainer.isVisible = false
+                        parentFolderContainer.isVisible = true
+                        // Update parent folder view with current path
+                        parentFolderFragment?.setCurrentPath(viewModel.currentPath)
+                    }
+                }
+            }
+
+            override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
+            override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
+        })
+    }
+
     private fun onPersistentDrawerOpenChanged(open: Boolean) {
         binding.persistentDrawerLayout?.let {
             if (open) {
@@ -647,6 +695,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         updateBottomToolbar()
         // Update tab title when path changes
         (activity as? FileListActivity)?.updateCurrentTabPath(path)
+        // Update parent folder view if visible
+        if (binding.parentFolderFragmentContainer?.isVisible == true) {
+            parentFolderFragment?.setCurrentPath(path)
+        }
     }
 
     private fun onSearchViewExpandedChanged(expanded: Boolean) {
@@ -1777,7 +1829,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         val bottomBarLayout: ViewGroup,
         val bottomToolbar: Toolbar,
         val bottomCreateFileNameEdit: EditText,
-        val speedDialView: SpeedDialView
+        val speedDialView: SpeedDialView,
+        val sidebarTabLayout: com.google.android.material.tabs.TabLayout? = null,
+        val navigationFragmentContainer: View? = null,
+        val parentFolderFragmentContainer: View? = null
     ) {
         companion object {
             fun inflate(
@@ -1792,6 +1847,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 val contentBinding = FileListFragmentContentIncludeBinding.bind(bindingRoot)
                 val bottomBarBinding = FileListFragmentBottomBarIncludeBinding.bind(bindingRoot)
                 val speedDialBinding = FileListFragmentSpeedDialIncludeBinding.bind(bindingRoot)
+                // Sidebar views for tablet landscape mode
+                val sidebarTabLayout = bindingRoot.findViewById<com.google.android.material.tabs.TabLayout>(R.id.sidebarTabLayout)
+                val navigationFragmentContainer = bindingRoot.findViewById<View>(R.id.navigationFragment)
+                val parentFolderFragmentContainer = bindingRoot.findViewById<View>(R.id.parentFolderFragment)
                 return Binding(
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
                     includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
@@ -1800,7 +1859,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                     contentBinding.progress, contentBinding.errorText, contentBinding.emptyView,
                     contentBinding.swipeRefreshLayout, contentBinding.recyclerView,
                     bottomBarBinding.bottomBarLayout, bottomBarBinding.bottomToolbar,
-                    bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView
+                    bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView,
+                    sidebarTabLayout, navigationFragmentContainer, parentFolderFragmentContainer
                 )
             }
         }

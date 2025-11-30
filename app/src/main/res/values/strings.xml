@@ -695,6 +695,10 @@
     <string name="navigation_settings" translatable="false">@string/settings_title</string>
     <string name="navigation_about" translatable="false">@string/about_title</string>
 
+    <string name="sidebar_tab_navigation">Navigation</string>
+    <string name="sidebar_tab_parent_folder">Parent</string>
+    <string name="parent_folder_item_directory">Folder</string>
+
     <string name="archive_viewer_title">Archive viewer</string>
     <string name="image_viewer_title">Image viewer</string>
     <string name="image_viewer_subtitle_format">%1$,d/%2$,d</string>
