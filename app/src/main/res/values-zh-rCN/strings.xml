@@ -264,6 +264,8 @@
     <string name="file_list_action_sort_directories_first">文件夹优先</string>
     <string name="file_list_action_view_sort_path_specific">仅用于此文件夹</string>
     <string name="file_list_action_new_task">新建窗口</string>
+    <string name="file_list_action_new_tab">新建标签页</string>
+    <string name="file_list_action_close_tab">关闭标签页</string>
     <string name="file_list_action_navigate_up">向上</string>
     <string name="file_list_action_navigate_to">转到</string>
     <string name="file_list_action_show_hidden_files">显示隐藏文件</string>
@@ -607,6 +609,26 @@
         <item>省略结尾</item>
         <item>滚动</item>
     </string-array>
+    <string name="settings_grid_columns_title">网格列数</string>
+    <string-array name="settings_grid_columns_entries">
+        <item>自动</item>
+        <item>1 列</item>
+        <item>2 列</item>
+        <item>3 列</item>
+        <item>4 列</item>
+        <item>5 列</item>
+        <item>6 列</item>
+    </string-array>
+    <string name="settings_grid_columns_min_title">最小网格列数</string>
+    <string name="settings_grid_columns_min_summary">文件夹没有缩略图文件时的最小列数</string>
+    <string-array name="settings_grid_columns_min_entries">
+        <item>1 列</item>
+        <item>2 列</item>
+        <item>3 列</item>
+        <item>4 列</item>
+        <item>5 列</item>
+        <item>6 列</item>
+    </string-array>
     <string name="settings_behavior_title">行为</string>
     <string name="settings_default_directory_title">默认文件夹</string>
     <string name="settings_standard_directories_title">标准文件夹</string>
@@ -633,6 +655,8 @@
     <string name="settings_show_pdf_thumbnail_pre_28_title">显示 PDF 文档缩略图</string>
     <string name="settings_show_pdf_thumbnail_pre_28_summary">可能导致应用在旧版 Android 上不稳定</string>
     <string name="settings_read_remote_files_for_thumbnail_title">读取远程文件以显示缩略图</string>
+    <string name="settings_file_list_tabs_enabled_title">启用标签页</string>
+    <string name="settings_file_list_tabs_enabled_summary">在标签页中浏览多个目录（需要重启应用）</string>
 
     <string name="about_title">关于</string>
     <string name="about_version_title">版本</string>

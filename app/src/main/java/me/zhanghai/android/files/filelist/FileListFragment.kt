@@ -23,6 +23,8 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -181,6 +183,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
 
     private lateinit var adapter: FileListAdapter
 
+    private lateinit var scaleGestureDetector: ScaleGestureDetector
+
     private val debouncedSearchRunnable = DebouncedRunnable(Handler(Looper.getMainLooper()), 1000) {
         if (!isResumed || !viewModel.isSearchViewExpanded) {
             return@DebouncedRunnable
@@ -248,6 +252,44 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         binding.recyclerView.setOnApplyWindowInsetsListener(
             ScrollingViewOnApplyWindowInsetsListener(binding.recyclerView, fastScroller)
         )
+        scaleGestureDetector = ScaleGestureDetector(
+            activity,
+            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                private var scaleFactor = 1f
+
+                override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                    scaleFactor = 1f
+                    return viewModel.viewType == FileViewType.GRID
+                }
+
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    scaleFactor *= detector.scaleFactor
+                    return true
+                }
+
+                override fun onScaleEnd(detector: ScaleGestureDetector) {
+                    val currentSpan = layoutManager.spanCount
+                    val newSpan = if (scaleFactor > 1.2f) {
+                        // Zoom in: fewer columns (larger items)
+                        (currentSpan - 1).coerceAtLeast(1)
+                    } else if (scaleFactor < 0.8f) {
+                        // Zoom out: more columns (smaller items)
+                        (currentSpan + 1).coerceAtMost(6)
+                    } else {
+                        currentSpan
+                    }
+                    if (newSpan != currentSpan) {
+                        Settings.FILE_LIST_GRID_COLUMNS.putValue(newSpan)
+                    }
+                }
+            }
+        )
+        binding.recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                scaleGestureDetector.onTouchEvent(e)
+                return false
+            }
+        })
         binding.speedDialView.inflate(R.menu.file_list_speed_dial)
         binding.speedDialView.setOnActionSelectedListener {
             when (it.id) {
@@ -364,6 +406,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         viewModel.selectedFilesLiveData.observe(viewLifecycleOwner) { onSelectedFilesChanged(it) }
         viewModel.pasteStateLiveData.observe(viewLifecycleOwner) { onPasteStateChanged(it) }
         Settings.FILE_NAME_ELLIPSIZE.observe(viewLifecycleOwner) { onFileNameEllipsizeChanged(it) }
+        Settings.FILE_LIST_GRID_COLUMNS.observe(viewLifecycleOwner) { onGridColumnsChanged() }
+        Settings.FILE_LIST_GRID_COLUMNS_MIN.observe(viewLifecycleOwner) { onGridColumnsChanged() }
         viewModel.fileListLiveData.observe(viewLifecycleOwner) { onFileListChanged(it) }
         Settings.FILE_LIST_SHOW_HIDDEN_FILES.observe(viewLifecycleOwner) {
             onShowHiddenFilesChanged(it)
@@ -441,6 +485,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         updateViewSortMenuItems()
         updateSelectAllMenuItem()
         updateShowHiddenFilesMenuItem()
+        updateTabMenuItems()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -498,6 +543,14 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
             }
             R.id.action_new_task -> {
                 newTask()
+                true
+            }
+            R.id.action_new_tab -> {
+                newTab()
+                true
+            }
+            R.id.action_close_tab -> {
+                closeTab()
                 true
             }
             R.id.action_navigate_up -> {
@@ -580,6 +633,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     private fun onCurrentPathChanged(path: Path) {
         updateOverlayToolbar()
         updateBottomToolbar()
+        // Update tab title when path changes
+        (activity as? FileListActivity)?.updateCurrentTabPath(path)
     }
 
     private fun onSearchViewExpandedChanged(expanded: Boolean) {
@@ -657,13 +712,25 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         layoutManager.spanCount = when (viewModel.viewType) {
             FileViewType.LIST -> 1
             FileViewType.GRID -> {
-                var widthDp = resources.configuration.screenWidthDp
-                val persistentDrawerLayout = binding.persistentDrawerLayout
-                if (persistentDrawerLayout != null &&
-                    persistentDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    widthDp -= getDimensionDp(R.dimen.navigation_max_width).roundToInt()
+                val configuredColumns = Settings.FILE_LIST_GRID_COLUMNS.valueCompat
+                val baseColumns = if (configuredColumns > 0) {
+                    configuredColumns
+                } else {
+                    var widthDp = resources.configuration.screenWidthDp
+                    val persistentDrawerLayout = binding.persistentDrawerLayout
+                    if (persistentDrawerLayout != null &&
+                        persistentDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                        widthDp -= getDimensionDp(R.dimen.navigation_max_width).roundToInt()
+                    }
+                    (widthDp / 180).coerceAtLeast(1)
                 }
-                (widthDp / 180).coerceAtLeast(2)
+                // Apply minimum column limit when folder has no thumbnail files
+                if (!adapter.hasThumbnailFiles) {
+                    val minColumnsNoThumbnail = Settings.FILE_LIST_GRID_COLUMNS_MIN.valueCompat
+                    baseColumns.coerceAtLeast(minColumnsNoThumbnail)
+                } else {
+                    baseColumns
+                }
             }
         }
     }
@@ -718,6 +785,14 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         openInNewTask(currentPath)
     }
 
+    private fun newTab() {
+        (activity as? FileListActivity)?.addNewTab(currentPath)
+    }
+
+    private fun closeTab() {
+        (activity as? FileListActivity)?.closeCurrentTab()
+    }
+
     private fun refresh() {
         viewModel.reload()
     }
@@ -737,6 +812,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
             files = files.filterNot { it.isHidden }
         }
         adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
+        // Update span count based on whether files have thumbnails
+        if (viewModel.viewType == FileViewType.GRID) {
+            updateSpanCount()
+        }
     }
 
     private fun updateShowHiddenFilesMenuItem() {
@@ -745,6 +824,15 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         }
         val showHiddenFiles = Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat
         menuBinding.showHiddenFilesItem.isChecked = showHiddenFiles
+    }
+
+    private fun updateTabMenuItems() {
+        if (!this::menuBinding.isInitialized) {
+            return
+        }
+        val tabsEnabled = Settings.FILE_LIST_TABS_ENABLED.valueCompat
+        menuBinding.newTabItem.isVisible = tabsEnabled
+        menuBinding.closeTabItem.isVisible = tabsEnabled
     }
 
     private fun share() {
@@ -1183,6 +1271,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
 
     private fun onFileNameEllipsizeChanged(fileNameEllipsize: TextUtils.TruncateAt) {
         adapter.nameEllipsize = fileNameEllipsize
+    }
+
+    private fun onGridColumnsChanged() {
+        updateSpanCount()
     }
 
     override fun clearSelectedFiles() {
@@ -1716,7 +1808,9 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         val sortDirectoriesFirstItem: MenuItem,
         val viewSortPathSpecificItem: MenuItem,
         val selectAllItem: MenuItem,
-        val showHiddenFilesItem: MenuItem
+        val showHiddenFilesItem: MenuItem,
+        val newTabItem: MenuItem,
+        val closeTabItem: MenuItem
     ) {
         companion object {
             fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
@@ -1732,7 +1826,9 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                     menu.findItem(R.id.action_sort_directories_first),
                     menu.findItem(R.id.action_view_sort_path_specific),
                     menu.findItem(R.id.action_select_all),
-                    menu.findItem(R.id.action_show_hidden_files)
+                    menu.findItem(R.id.action_show_hidden_files),
+                    menu.findItem(R.id.action_new_tab),
+                    menu.findItem(R.id.action_close_tab)
                 )
             }
         }

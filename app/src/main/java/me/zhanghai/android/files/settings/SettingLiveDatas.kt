@@ -197,6 +197,45 @@ class BooleanSettingLiveData(
 }
 
 // Use string resource for default value so that we can support ListPreference.
+class IntegerStringSettingLiveData(
+    nameSuffix: String?,
+    @StringRes keyRes: Int,
+    keySuffix: String?,
+    @StringRes defaultValueRes: Int
+) : SettingLiveData<Int>(nameSuffix, keyRes, keySuffix, defaultValueRes) {
+    constructor(@StringRes keyRes: Int, @StringRes defaultValueRes: Int) : this(
+        null, keyRes, null, defaultValueRes
+    )
+
+    init {
+        init()
+    }
+
+    override fun getDefaultValue(@StringRes defaultValueRes: Int): Int =
+        application.getString(defaultValueRes).toInt()
+
+    override fun getValue(
+        sharedPreferences: SharedPreferences,
+        key: String,
+        defaultValue: Int
+    ): Int =
+        try {
+            sharedPreferences.getString(key, null)?.toIntOrNull() ?: defaultValue
+        } catch (e: ClassCastException) {
+            // Migration from old Integer storage to String storage
+            try {
+                sharedPreferences.getInt(key, defaultValue)
+            } catch (e2: Exception) {
+                defaultValue
+            }
+        }
+
+    override fun putValue(sharedPreferences: SharedPreferences, key: String, value: Int) {
+        sharedPreferences.edit { putString(key, value.toString()) }
+    }
+}
+
+// Use string resource for default value so that we can support ListPreference.
 // TODO: kotlinc: Type argument is not within its bounds: should be subtype of 'Enum<E>'
 //  https://youtrack.jetbrains.com/issue/KT-60985
 //class EnumSettingLiveData<E : Enum<E>?>(

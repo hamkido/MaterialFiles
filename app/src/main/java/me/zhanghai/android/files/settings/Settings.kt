@@ -63,6 +63,12 @@ object Settings {
             FileSortOptions(FileSortOptions.By.NAME, FileSortOptions.Order.ASCENDING, true)
         )
 
+    val FILE_LIST_GRID_COLUMNS: SettingLiveData<Int> =
+        IntegerStringSettingLiveData(
+            R.string.pref_key_file_list_grid_columns,
+            R.string.pref_default_value_file_list_grid_columns_string
+        )
+
     val CREATE_ARCHIVE_TYPE: SettingLiveData<Int> =
         ResourceIdSettingLiveData(R.string.pref_key_create_archive_type, R.id.zipRadio)
 
@@ -180,5 +186,17 @@ object Settings {
         BooleanSettingLiveData(
             R.string.pref_key_read_remote_files_for_thumbnail,
             R.bool.pref_default_value_read_remote_files_for_thumbnail
+        )
+
+    val FILE_LIST_TABS_ENABLED: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_list_tabs_enabled,
+            R.bool.pref_default_value_file_list_tabs_enabled
+        )
+
+    val FILE_LIST_GRID_COLUMNS_MIN: SettingLiveData<Int> =
+        IntegerStringSettingLiveData(
+            R.string.pref_key_file_list_grid_columns_min,
+            R.string.pref_default_value_file_list_grid_columns_min_string
         )
 }

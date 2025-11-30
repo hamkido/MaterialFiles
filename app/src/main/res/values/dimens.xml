@@ -50,4 +50,7 @@
 
     <!-- Reduce fast scroll thumb touch target size because we have the popup menu beside it. -->
     <dimen name="afs_min_touch_target_size">24dp</dimen>
+
+    <!-- Grid view thumbnail minimum height to ensure consistent item sizes -->
+    <dimen name="file_item_grid_thumbnail_min_height">80dp</dimen>
 </resources>

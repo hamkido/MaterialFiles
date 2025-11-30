@@ -404,6 +404,18 @@ class FileListAdapter(
     override val isAnimationEnabled: Boolean
         get() = Settings.FILE_LIST_ANIMATION.valueCompat
 
+    // Check if any file in the current list supports thumbnail preview
+    val hasThumbnailFiles: Boolean
+        get() {
+            for (index in 0..<itemCount) {
+                val file = getItem(index)
+                if (file.supportsThumbnail) {
+                    return true
+                }
+            }
+            return false
+        }
+
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()
 

@@ -74,6 +74,18 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_new_tab"
+        android:orderInCategory="100"
+        android:title="@string/file_list_action_new_tab"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_close_tab"
+        android:orderInCategory="100"
+        android:title="@string/file_list_action_close_tab"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_navigate_up"
         android:orderInCategory="100"
         android:title="@string/file_list_action_navigate_up"

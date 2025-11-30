@@ -53,6 +53,28 @@
             android:entries="@array/settings_file_name_ellipsize_entries"
             android:entryValues="@array/pref_entry_values_file_name_ellipsize"
             app:useSimpleSummaryProvider="true" />
+
+        <rikka.preference.SimpleMenuPreference
+            android:key="@string/pref_key_file_list_grid_columns"
+            android:title="@string/settings_grid_columns_title"
+            android:defaultValue="0"
+            android:entries="@array/settings_grid_columns_entries"
+            android:entryValues="@array/pref_entry_values_grid_columns"
+            app:useSimpleSummaryProvider="true" />
+
+        <rikka.preference.SimpleMenuPreference
+            android:key="@string/pref_key_file_list_grid_columns_min"
+            android:title="@string/settings_grid_columns_min_title"
+            android:defaultValue="1"
+            android:entries="@array/settings_grid_columns_min_entries"
+            android:entryValues="@array/pref_entry_values_grid_columns_min"
+            android:summary="@string/settings_grid_columns_min_summary" />
+
+        <SwitchPreferenceCompat
+            android:key="@string/pref_key_file_list_tabs_enabled"
+            android:title="@string/settings_file_list_tabs_enabled_title"
+            android:defaultValue="@bool/pref_default_value_file_list_tabs_enabled"
+            android:summary="@string/settings_file_list_tabs_enabled_summary" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_behavior_title">

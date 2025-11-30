@@ -82,4 +82,32 @@
     <bool name="pref_visible_show_pdf_thumbnail_pre_28">true</bool>
     <string name="pref_key_read_remote_files_for_thumbnail">key_read_remote_files_for_thumbnail</string>
     <bool name="pref_default_value_read_remote_files_for_thumbnail">true</bool>
+
+    <string name="pref_key_file_list_tabs_enabled">key_file_list_tabs_enabled</string>
+    <bool name="pref_default_value_file_list_tabs_enabled">false</bool>
+
+    <string name="pref_key_file_list_grid_columns_min">key_file_list_grid_columns_min</string>
+    <integer name="pref_default_value_file_list_grid_columns_min">1</integer>
+    <string name="pref_default_value_file_list_grid_columns_min_string">1</string>
+    <string-array name="pref_entry_values_grid_columns_min">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
+    <string name="pref_key_file_list_grid_columns">key_file_list_grid_columns</string>
+    <integer name="pref_default_value_file_list_grid_columns">0</integer>
+    <string name="pref_default_value_file_list_grid_columns_string">0</string>
+    <string-array name="pref_entry_values_grid_columns">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
 </resources>

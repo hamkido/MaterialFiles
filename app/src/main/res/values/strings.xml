@@ -296,6 +296,8 @@
     <string name="file_list_action_sort_directories_first">Folders first</string>
     <string name="file_list_action_view_sort_path_specific">Only for this folder</string>
     <string name="file_list_action_new_task">New window</string>
+    <string name="file_list_action_new_tab">New tab</string>
+    <string name="file_list_action_close_tab">Close tab</string>
     <string name="file_list_action_navigate_up">Go up</string>
     <string name="file_list_action_navigate_to">Go to</string>
     <string name="file_list_navigate_to_title" translatable="false">@string/file_list_action_navigate_to</string>
@@ -755,6 +757,26 @@
         <item>Ellipsize the end</item>
         <item>Marquee</item>
     </string-array>
+    <string name="settings_grid_columns_title">Grid columns</string>
+    <string-array name="settings_grid_columns_entries">
+        <item>Auto</item>
+        <item>1 column</item>
+        <item>2 columns</item>
+        <item>3 columns</item>
+        <item>4 columns</item>
+        <item>5 columns</item>
+        <item>6 columns</item>
+    </string-array>
+    <string name="settings_grid_columns_min_title">Minimum grid columns</string>
+    <string name="settings_grid_columns_min_summary">Min columns when folder has no thumbnail files</string>
+    <string-array name="settings_grid_columns_min_entries">
+        <item>1 column</item>
+        <item>2 columns</item>
+        <item>3 columns</item>
+        <item>4 columns</item>
+        <item>5 columns</item>
+        <item>6 columns</item>
+    </string-array>
     <string name="settings_behavior_title">Behavior</string>
     <string name="settings_default_directory_title">Default folder</string>
     <string name="settings_storages_title" translatable="false">@string/storage_list_title</string>
@@ -787,6 +809,8 @@
     <string name="settings_show_pdf_thumbnail_pre_28_title">Show thumbnail for PDF documents</string>
     <string name="settings_show_pdf_thumbnail_pre_28_summary">Might make the app unstable on older versions of Android</string>
     <string name="settings_read_remote_files_for_thumbnail_title">Read remote files for thumbnail</string>
+    <string name="settings_file_list_tabs_enabled_title">Enable tabs</string>
+    <string name="settings_file_list_tabs_enabled_summary">Browse multiple directories in tabs (requires app restart)</string>
 
     <string name="about_title">About</string>
     <string name="about_version_title">Version</string>

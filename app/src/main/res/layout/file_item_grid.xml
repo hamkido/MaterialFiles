@@ -21,6 +21,7 @@
         android:layout_marginStart="@dimen/screen_edge_margin"
         android:layout_marginEnd="@dimen/screen_edge_margin"
         android:layout_marginTop="@dimen/screen_edge_margin"
+        android:minHeight="@dimen/file_item_grid_thumbnail_min_height"
         android:duplicateParentState="true"
         app:aspectRatio="1.78">
 
