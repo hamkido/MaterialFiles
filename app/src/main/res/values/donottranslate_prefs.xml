@@ -85,6 +85,7 @@
 
     <string name="pref_key_file_list_tabs_enabled">key_file_list_tabs_enabled</string>
     <bool name="pref_default_value_file_list_tabs_enabled">false</bool>
+    <string name="pref_key_file_list_tabs">key_file_list_tabs</string>
 
     <string name="pref_key_file_list_grid_columns_min">key_file_list_grid_columns_min</string>
     <integer name="pref_default_value_file_list_grid_columns_min">1</integer>

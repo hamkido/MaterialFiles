@@ -15,6 +15,7 @@ import me.zhanghai.android.files.compat.EnvironmentCompat2
 import me.zhanghai.android.files.filelist.FileSortOptions
 import me.zhanghai.android.files.filelist.FileViewType
 import me.zhanghai.android.files.filelist.OpenApkDefaultAction
+import me.zhanghai.android.files.filelist.Tab
 import me.zhanghai.android.files.navigation.BookmarkDirectory
 import me.zhanghai.android.files.navigation.StandardDirectorySettings
 import me.zhanghai.android.files.provider.root.RootStrategy
@@ -193,6 +194,9 @@ object Settings {
             R.string.pref_key_file_list_tabs_enabled,
             R.bool.pref_default_value_file_list_tabs_enabled
         )
+
+    val FILE_LIST_TABS: SettingLiveData<List<Tab>> =
+        ParcelValueSettingLiveData(R.string.pref_key_file_list_tabs, emptyList())
 
     val FILE_LIST_GRID_COLUMNS_MIN: SettingLiveData<Int> =
         IntegerStringSettingLiveData(

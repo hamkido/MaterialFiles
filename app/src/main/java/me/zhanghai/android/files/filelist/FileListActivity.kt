@@ -14,7 +14,10 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.viewpager2.widget.ViewPager2
@@ -70,9 +73,42 @@ class FileListActivity : AppActivity() {
         tabLayout = findViewById(R.id.tabLayout)
         viewPager = findViewById(R.id.viewPager)
 
+        // Apply window insets to TabLayout for status bar padding
+        val rootLayout = findViewById<View>(R.id.rootLayout)
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            tabLayout?.let { layout ->
+                if (layout.isVisible) {
+                    layout.updatePadding(
+                        left = systemBars.left,
+                        top = systemBars.top,
+                        right = systemBars.right
+                    )
+                    // Consume top inset when TabLayout is visible
+                    WindowInsetsCompat.Builder(insets)
+                        .setInsets(
+                            WindowInsetsCompat.Type.systemBars(),
+                            androidx.core.graphics.Insets.of(
+                                systemBars.left, 0, systemBars.right, systemBars.bottom
+                            )
+                        )
+                        .build()
+                } else {
+                    insets
+                }
+            } ?: insets
+        }
+
         if (savedInstanceState != null) {
+            // Restore from instance state (configuration change)
             @Suppress("DEPRECATION")
             savedInstanceState.getParcelableArrayList<Tab>(STATE_TABS)?.let { savedTabs ->
+                tabs.addAll(savedTabs)
+            }
+        } else {
+            // Restore from persistent storage (app restart)
+            val savedTabs = Settings.FILE_LIST_TABS.valueCompat
+            if (savedTabs.isNotEmpty()) {
                 tabs.addAll(savedTabs)
             }
         }
@@ -80,6 +116,7 @@ class FileListActivity : AppActivity() {
         if (tabs.isEmpty()) {
             val initialPath = intent.extraPath ?: Settings.FILE_LIST_DEFAULT_DIRECTORY.valueCompat
             tabs.add(Tab(FileListPagerAdapter.generateTabId(), initialPath))
+            saveTabs()
         }
 
         pagerAdapter = FileListPagerAdapter(this, tabs)
@@ -105,12 +142,25 @@ class FileListActivity : AppActivity() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
                 updateTabTitles()
+                // Re-establish the current fragment's toolbar after page change
+                viewPager?.post {
+                    getCurrentFragment()?.refreshToolbar()
+                }
             }
         })
+
+        // Ensure the current fragment's toolbar is set up after ViewPager is ready
+        viewPager?.post {
+            getCurrentFragment()?.refreshToolbar()
+        }
     }
 
     private fun updateTabLayoutVisibility() {
         tabLayout?.isVisible = tabs.size > 1
+        // Request insets to be reapplied after visibility change
+        findViewById<View>(R.id.rootLayout)?.let {
+            ViewCompat.requestApplyInsets(it)
+        }
     }
 
     private fun updateTabTitles() {
@@ -128,6 +178,10 @@ class FileListActivity : AppActivity() {
         }
     }
 
+    private fun saveTabs() {
+        Settings.FILE_LIST_TABS.putValue(tabs.toList())
+    }
+
     fun addNewTab(path: Path? = null) {
         if (!isTabsEnabled) return
         
@@ -138,6 +192,7 @@ class FileListActivity : AppActivity() {
             viewPager?.setCurrentItem(newPosition, true)
             // TabLayoutMediator automatically syncs with adapter changes via notifyItemInserted
             updateTabTitles()
+            saveTabs()
         }
     }
 
@@ -149,6 +204,7 @@ class FileListActivity : AppActivity() {
                 updateTabLayoutVisibility()
                 // TabLayoutMediator automatically syncs with adapter changes via notifyItemRemoved
                 updateTabTitles()
+                saveTabs()
             }
         }
     }
@@ -163,6 +219,7 @@ class FileListActivity : AppActivity() {
         viewPager?.currentItem?.let { position ->
             pagerAdapter?.updateTabPath(position, path)
             updateTabTitles()
+            saveTabs()
         }
     }
 

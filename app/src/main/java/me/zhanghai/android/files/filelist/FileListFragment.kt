@@ -417,6 +417,12 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     override fun onResume() {
         super.onResume()
 
+        // Refresh toolbar when resuming in ViewPager2 to ensure menu is visible
+        val fileListActivity = activity as? FileListActivity
+        if (fileListActivity?.getCurrentFragment() == this) {
+            refreshToolbar()
+        }
+
         if (!viewModel.isNotificationPermissionRequested) {
             ensureStorageAccess()
         }
@@ -617,6 +623,12 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
             }
         }
         return false
+    }
+
+    fun refreshToolbar() {
+        val activity = activity as? AppCompatActivity ?: return
+        activity.setSupportActionBar(binding.toolbar)
+        activity.invalidateOptionsMenu()
     }
 
     private fun onPersistentDrawerOpenChanged(open: Boolean) {
