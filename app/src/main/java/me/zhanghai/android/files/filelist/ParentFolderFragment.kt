@@ -37,7 +37,8 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
 
     lateinit var listener: Listener
 
-    private val currentPathLiveData = MutableLiveData<Path>()
+    private var currentPath: Path? = null
+    private var loadedParentPath: Path? = null
     private val parentFilesLiveData = MutableLiveData<Stateful<List<FileItem>>>()
     private var loadJob: Job? = null
     private var pendingPath: Path? = null
@@ -60,15 +61,6 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
 
         val viewLifecycleOwner = viewLifecycleOwner
 
-        currentPathLiveData.observe(viewLifecycleOwner) { path ->
-            val parentPath = path.parent
-            if (parentPath != null) {
-                loadParentFiles(parentPath)
-            } else {
-                adapter.clear()
-            }
-        }
-
         parentFilesLiveData.observe(viewLifecycleOwner) { stateful ->
             when (stateful) {
                 is Loading -> {
@@ -79,7 +71,7 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
                         .filter { it.attributes.isDirectory }
                         .sortedBy { it.path.fileName?.toString()?.lowercase() }
                     adapter.replace(files, true)
-                    adapter.setCurrentPath(currentPathLiveData.value)
+                    adapter.setCurrentPath(currentPath)
                 }
                 is Failure -> {
                     adapter.clear()
@@ -89,13 +81,31 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
 
         // Apply pending path if set before view was created
         pendingPath?.let {
-            currentPathLiveData.value = it
+            updateCurrentPath(it)
             pendingPath = null
+        }
+    }
+
+    private fun updateCurrentPath(path: Path) {
+        currentPath = path
+        val parentPath = path.parent
+        if (parentPath != null) {
+            // Only reload if parent directory changed
+            if (loadedParentPath != parentPath) {
+                loadParentFiles(parentPath)
+            } else {
+                // Just update the selected item highlight
+                adapter.setCurrentPath(path)
+            }
+        } else {
+            loadedParentPath = null
+            adapter.clear()
         }
     }
 
     private fun loadParentFiles(parentPath: Path) {
         loadJob?.cancel()
+        loadedParentPath = parentPath
         parentFilesLiveData.value = Loading(parentFilesLiveData.value?.value)
 
         loadJob = CoroutineScope(Dispatchers.IO).launch {
@@ -123,7 +133,7 @@ class ParentFolderFragment : Fragment(), ParentFolderAdapter.Listener {
 
     fun setCurrentPath(path: Path) {
         if (_binding != null) {
-            currentPathLiveData.value = path
+            updateCurrentPath(path)
         } else {
             pendingPath = path
         }
