@@ -12,8 +12,11 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import coil.Coil
 import coil.dispose
 import coil.load
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import coil.size.Size
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
@@ -32,6 +35,7 @@ import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.provider.common.AndroidFileTypeDetector
 import me.zhanghai.android.files.provider.common.newInputStream
 import me.zhanghai.android.files.provider.common.readAttributes
+import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.ui.SimpleAdapter
 import me.zhanghai.android.files.util.fadeInUnsafe
 import me.zhanghai.android.files.util.fadeOutUnsafe
@@ -43,6 +47,9 @@ class ImageViewerAdapter(
     private val lifecycleOwner: LifecycleOwner,
     private val listener: (View) -> Unit
 ) : SimpleAdapter<Path, ImageViewerAdapter.ViewHolder>() {
+    // Cache ImageInfo to avoid repeated IO operations
+    private val imageInfoCache = mutableMapOf<Path, ImageInfo>()
+    
     override val hasStableIds: Boolean
         get() = true
 
@@ -57,6 +64,38 @@ class ImageViewerAdapter(
         binding.image.setOnPhotoTapListener { view, _, _ -> listener(view) }
         binding.largeImage.setOnClickListener(listener)
         loadImage(binding, path)
+        
+        // Preload adjacent images into Coil cache
+        preloadAdjacentImages(position)
+    }
+    
+    private fun preloadAdjacentImages(currentPosition: Int) {
+        val preloadRange = 3 // Preload 3 images ahead
+        for (offset in 1..preloadRange) {
+            listOf(currentPosition + offset, currentPosition - offset).forEach { pos ->
+                if (pos in 0 until itemCount) {
+                    val path = getItem(pos)
+                    lifecycleOwner.lifecycleScope.launch {
+                        try {
+                            val imageInfo = imageInfoCache[path] ?: withContext(Dispatchers.IO) {
+                                path.loadImageInfo().also { imageInfoCache[path] = it }
+                            }
+                            // Only preload non-large images (those using Coil)
+                            if (!imageInfo.shouldUseLargeImageView) {
+                                val request = ImageRequest.Builder(application)
+                                    .data(path to imageInfo.attributes)
+                                    .size(Size.ORIGINAL)
+                                    .memoryCachePolicy(CachePolicy.ENABLED)
+                                    .build()
+                                Coil.imageLoader(application).enqueue(request)
+                            }
+                        } catch (e: Exception) {
+                            // Silently ignore preload errors
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun onViewRecycled(holder: ViewHolder) {
@@ -74,7 +113,10 @@ class ImageViewerAdapter(
         binding.largeImage.isVisible = false
         lifecycleOwner.lifecycleScope.launch {
             val imageInfo = try {
-                withContext(Dispatchers.IO) { path.loadImageInfo() }
+                // Use cached ImageInfo if available
+                imageInfoCache[path] ?: withContext(Dispatchers.IO) {
+                    path.loadImageInfo().also { imageInfoCache[path] = it }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 showError(binding, e)

@@ -8,6 +8,7 @@ package me.zhanghai.android.files.viewer.image
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -107,6 +108,10 @@ class ImageViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
         binding.viewPager.apply {
             // Preload more images for smoother browsing experience
             offscreenPageLimit = 5
+            // Increase RecyclerView cache to keep more views from being recycled
+            (getChildAt(0) as? androidx.recyclerview.widget.RecyclerView)?.apply {
+                setItemViewCacheSize(10)
+            }
             adapter = this@ImageViewerFragment.adapter
             // ViewPager saves its position and will restore it later.
             setCurrentItem(args.position, false)
@@ -204,6 +209,64 @@ class ImageViewerFragment : Fragment(), ConfirmDeleteDialogFragment.Listener {
             .apply { extraPath = path }
             .withChooser()
         startActivitySafe(intent)
+    }
+
+    /**
+     * Handle ranger-style hjkl keyboard navigation for image viewing
+     * h/k: previous image
+     * j/l: next image
+     * g: first image
+     * G (shift+g): last image
+     */
+    fun onKeyboardNavigation(event: KeyEvent): Boolean {
+        if (paths.isEmpty()) return false
+        
+        val keyCode = event.keyCode
+        val currentPosition = binding.viewPager.currentItem
+        val lastPosition = paths.lastIndex
+        
+        return when (keyCode) {
+            KeyEvent.KEYCODE_H, KeyEvent.KEYCODE_K, 
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> {
+                // Previous image
+                if (currentPosition > 0) {
+                    binding.viewPager.setCurrentItem(currentPosition - 1, true)
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_J, KeyEvent.KEYCODE_L,
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                // Next image
+                if (currentPosition < lastPosition) {
+                    binding.viewPager.setCurrentItem(currentPosition + 1, true)
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_G -> {
+                // g: first image, G (shift+g): last image
+                val targetPosition = if (event.isShiftPressed) lastPosition else 0
+                if (currentPosition != targetPosition) {
+                    binding.viewPager.setCurrentItem(targetPosition, true)
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_SPACE -> {
+                // Next image (space bar common for image viewers)
+                if (currentPosition < lastPosition) {
+                    binding.viewPager.setCurrentItem(currentPosition + 1, true)
+                    true
+                } else {
+                    false
+                }
+            }
+            else -> false
+        }
     }
 
     private val currentPath: Path

@@ -21,6 +21,7 @@ import me.zhanghai.android.files.storage.SftpServerAuthenticator
 import me.zhanghai.android.files.storage.SmbServerAuthenticator
 import me.zhanghai.android.files.storage.StorageVolumeListLiveData
 import me.zhanghai.android.files.storage.WebDavServerAuthenticator
+import me.zhanghai.android.files.bookmark.BookmarkSyncEngine
 import me.zhanghai.android.files.theme.custom.CustomThemeHelper
 import me.zhanghai.android.files.theme.night.NightModeHelper
 import java.util.Properties
@@ -39,7 +40,8 @@ val appInitializers = listOf(
     ::initializeLiveDataObjects,
     ::initializeCustomTheme,
     ::initializeNightMode,
-    ::createNotificationChannels
+    ::createNotificationChannels,
+    ::initializeBookmarkSync
 )
 
 private fun initializeCrashlytics() {
@@ -100,4 +102,9 @@ private fun createNotificationChannels() {
             ).map { it.create(application) }
         )
     }
+}
+
+private fun initializeBookmarkSync() {
+    // Initialize bookmark sync on app startup
+    BookmarkSyncEngine.initialize()
 }

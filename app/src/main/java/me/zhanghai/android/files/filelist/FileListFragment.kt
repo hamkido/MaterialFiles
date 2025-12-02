@@ -76,6 +76,8 @@ import me.zhanghai.android.files.filejob.FileJobService
 import me.zhanghai.android.files.filelist.FileSortOptions.By
 import me.zhanghai.android.files.filelist.FileSortOptions.Order
 import me.zhanghai.android.files.fileproperties.FilePropertiesDialogFragment
+import me.zhanghai.android.files.bookmark.BookmarkManager
+import me.zhanghai.android.files.bookmark.FileBookmark
 import me.zhanghai.android.files.navigation.BookmarkDirectories
 import me.zhanghai.android.files.navigation.BookmarkDirectory
 import me.zhanghai.android.files.navigation.NavigationFragment
@@ -186,6 +188,9 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     private lateinit var adapter: FileListAdapter
 
     private lateinit var scaleGestureDetector: ScaleGestureDetector
+
+    // Keyboard navigation state (ranger-style hjkl)
+    private var focusedPosition: Int = 0
 
     private val debouncedSearchRunnable = DebouncedRunnable(Handler(Looper.getMainLooper()), 1000) {
         if (!isResumed || !viewModel.isSearchViewExpanded) {
@@ -637,6 +642,141 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         return false
     }
 
+    /**
+     * Handle ranger-style hjkl keyboard navigation
+     * h: go to parent directory
+     * j: move down in file list
+     * k: move up in file list
+     * l: open file/enter directory
+     * g: go to first file
+     * G (shift+g): go to last file
+     */
+    fun onKeyboardNavigation(event: KeyEvent): Boolean {
+        // Don't handle navigation when search view is expanded or action mode is active
+        if (viewModel.isSearchViewExpanded || overlayActionMode.isActive) {
+            return false
+        }
+
+        val keyCode = event.keyCode
+        val itemCount = adapter.itemCount
+        if (itemCount == 0 && keyCode != KeyEvent.KEYCODE_H) {
+            return false
+        }
+
+        return when (keyCode) {
+            KeyEvent.KEYCODE_H, KeyEvent.KEYCODE_DPAD_LEFT -> {
+                // Go to parent directory
+                if (viewModel.canNavigateUpBreadcrumb) {
+                    navigateUp()
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_J, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                // Move down
+                if (itemCount > 0) {
+                    moveFocus((focusedPosition + 1).coerceAtMost(itemCount - 1))
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_K, KeyEvent.KEYCODE_DPAD_UP -> {
+                // Move up
+                if (itemCount > 0) {
+                    moveFocus((focusedPosition - 1).coerceAtLeast(0))
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_L, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_DPAD_CENTER -> {
+                // Open file or enter directory
+                if (itemCount > 0 && focusedPosition in 0 until itemCount) {
+                    val file = adapter.getItem(focusedPosition)
+                    openFile(file)
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_G -> {
+                // g: go to first, G (shift+g): go to last
+                if (itemCount > 0) {
+                    val targetPosition = if (event.isShiftPressed) itemCount - 1 else 0
+                    moveFocus(targetPosition)
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_SPACE -> {
+                // Toggle selection on current item
+                if (itemCount > 0 && focusedPosition in 0 until itemCount) {
+                    val file = adapter.getItem(focusedPosition)
+                    viewModel.selectFile(file, file !in viewModel.selectedFiles)
+                    true
+                } else {
+                    false
+                }
+            }
+            KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT -> {
+                // Ignore shift key itself
+                false
+            }
+            else -> false
+        }
+    }
+
+    private fun moveFocus(newPosition: Int) {
+        if (newPosition == focusedPosition) return
+        
+        val oldPosition = focusedPosition
+        focusedPosition = newPosition
+        
+        // Update adapter focus state
+        adapter.setFocusedPosition(focusedPosition)
+        
+        // Notify adapter of changes
+        if (oldPosition in 0 until adapter.itemCount) {
+            adapter.notifyItemChanged(oldPosition, FileListAdapter.PAYLOAD_FOCUS_CHANGED)
+        }
+        if (focusedPosition in 0 until adapter.itemCount) {
+            adapter.notifyItemChanged(focusedPosition, FileListAdapter.PAYLOAD_FOCUS_CHANGED)
+        }
+        
+        // Scroll to make focused item visible and centered
+        scrollToFocusedItem(newPosition)
+    }
+
+    private fun scrollToFocusedItem(position: Int) {
+        val recyclerView = binding.recyclerView
+        val firstVisible = layoutManager.findFirstCompletelyVisibleItemPosition()
+        val lastVisible = layoutManager.findLastCompletelyVisibleItemPosition()
+        
+        // Check if item is already fully visible
+        if (position in firstVisible..lastVisible) {
+            return
+        }
+        
+        // Get the view at position to calculate its height for centering
+        val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
+        val itemHeight = viewHolder?.itemView?.height ?: 0
+        
+        // Calculate offset to center the item
+        val recyclerHeight = recyclerView.height
+        val offset = (recyclerHeight - itemHeight) / 2
+        
+        layoutManager.scrollToPositionWithOffset(position, offset.coerceAtLeast(0))
+    }
+
+    private fun resetFocusPosition() {
+        focusedPosition = 0
+        adapter.setFocusedPosition(0)
+    }
+
     fun refreshToolbar() {
         val activity = activity as? AppCompatActivity ?: return
         activity.setSupportActionBar(binding.toolbar)
@@ -705,6 +845,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         if (binding.parentFolderFragmentContainer?.isVisible == true) {
             parentFolderFragment?.setCurrentPath(path)
         }
+        // Reset keyboard navigation focus when changing directory
+        resetFocusPosition()
     }
 
     private fun onSearchViewExpandedChanged(expanded: Boolean) {
@@ -1533,7 +1675,38 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     }
 
     override fun addBookmark(file: FileItem) {
-        addBookmark(file.path)
+        val path = file.path
+        val isDirectory = file.attributes.isDirectory
+        val name = path.name
+
+        if (isDirectory) {
+            // For directories, add to both sidebar bookmarks and file bookmarks
+            BookmarkDirectories.add(BookmarkDirectory(null, path))
+        }
+
+        // Add to file bookmark system (for sync)
+        if (BookmarkManager.isBookmarked(path)) {
+            // Already bookmarked, remove it
+            BookmarkManager.getBookmarkByPath(path)?.let { bookmark ->
+                BookmarkManager.deleteBookmark(bookmark.id)
+            }
+            if (isDirectory) {
+                // Also remove from sidebar bookmarks
+                Settings.BOOKMARK_DIRECTORIES.valueCompat.find { it.path == path }?.let {
+                    BookmarkDirectories.remove(it)
+                }
+            }
+            showToast(R.string.file_bookmark_removed)
+        } else {
+            // Add new bookmark
+            BookmarkManager.addBookmark(
+                name = name,
+                path = path,
+                isDirectory = isDirectory,
+                showInSidebar = isDirectory
+            )
+            showToast(R.string.file_bookmark_added)
+        }
     }
 
     override fun addBookmark() {
@@ -1541,8 +1714,15 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
     }
 
     private fun addBookmark(path: Path) {
+        // For current directory bookmark (from speed dial)
         BookmarkDirectories.add(BookmarkDirectory(null, path))
-        showToast(R.string.file_add_bookmark_success)
+        BookmarkManager.addBookmark(
+            name = path.name,
+            path = path,
+            isDirectory = true,
+            showInSidebar = true
+        )
+        showToast(R.string.file_bookmark_added)
     }
 
     override fun createShortcut(file: FileItem) {

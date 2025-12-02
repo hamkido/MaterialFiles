@@ -100,6 +100,16 @@
     </string-array>
 
     <string name="pref_key_file_list_grid_columns">key_file_list_grid_columns</string>
+
+    <!-- File Bookmarks Sync -->
+    <string name="pref_key_file_bookmark_sync_enabled">key_file_bookmark_sync_enabled</string>
+    <bool name="pref_default_value_file_bookmark_sync_enabled">false</bool>
+    <string name="pref_key_file_bookmark_sync_storage_id">key_file_bookmark_sync_storage_id</string>
+    <string name="pref_key_file_bookmark_sync_path">key_file_bookmark_sync_path</string>
+    <string name="pref_default_value_file_bookmark_sync_path">/bookmarks/</string>
+    <string name="pref_key_file_bookmark_webdav_url">key_file_bookmark_webdav_url</string>
+    <string name="pref_key_file_bookmark_webdav_username">key_file_bookmark_webdav_username</string>
+    <string name="pref_key_file_bookmark_webdav_password">key_file_bookmark_webdav_password</string>
     <integer name="pref_default_value_file_list_grid_columns">0</integer>
     <string name="pref_default_value_file_list_grid_columns_string">0</string>
     <string-array name="pref_entry_values_grid_columns">

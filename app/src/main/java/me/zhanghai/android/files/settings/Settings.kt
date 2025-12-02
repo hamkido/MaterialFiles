@@ -203,4 +203,41 @@ object Settings {
             R.string.pref_key_file_list_grid_columns_min,
             R.string.pref_default_value_file_list_grid_columns_min_string
         )
+
+    // File Bookmark Sync Settings
+    val FILE_BOOKMARK_SYNC_ENABLED: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_bookmark_sync_enabled,
+            R.bool.pref_default_value_file_bookmark_sync_enabled
+        )
+
+    val FILE_BOOKMARK_SYNC_STORAGE_ID: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_file_bookmark_sync_storage_id,
+            R.string.pref_default_value_empty
+        )
+
+    val FILE_BOOKMARK_SYNC_PATH: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_file_bookmark_sync_path,
+            R.string.pref_default_value_file_bookmark_sync_path
+        )
+
+    val FILE_BOOKMARK_WEBDAV_URL: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_file_bookmark_webdav_url,
+            R.string.pref_default_value_empty
+        )
+
+    val FILE_BOOKMARK_WEBDAV_USERNAME: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_file_bookmark_webdav_username,
+            R.string.pref_default_value_empty
+        )
+
+    val FILE_BOOKMARK_WEBDAV_PASSWORD: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_file_bookmark_webdav_password,
+            R.string.pref_default_value_empty
+        )
 }

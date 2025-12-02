@@ -80,6 +80,13 @@ class FileListAdapter(
 
     private val filePositionMap = mutableMapOf<Path, Int>()
 
+    // Keyboard navigation focus position
+    private var focusedPosition: Int = 0
+
+    fun setFocusedPosition(position: Int) {
+        focusedPosition = position
+    }
+
     private lateinit var _nameEllipsize: TextUtils.TruncateAt
     var nameEllipsize: TextUtils.TruncateAt
         get() = _nameEllipsize
@@ -225,6 +232,9 @@ class FileListAdapter(
         menu.findItem(R.id.action_copy).isVisible = !hasPickOptions
         val checked = file in selectedFiles
         holder.itemLayout.isChecked = checked
+        // Keyboard navigation focus highlight
+        val isFocused = position == focusedPosition
+        holder.itemLayout.isActivated = isFocused
         holder.nameText.apply {
             if (isSingleLineCompat) {
                 val nameEllipsize = nameEllipsize
@@ -335,7 +345,8 @@ class FileListAdapter(
         menu.findItem(R.id.action_rename).isVisible = !isReadOnly
         menu.findItem(R.id.action_extract).isVisible = file.isArchiveFile
         menu.findItem(R.id.action_archive).isVisible = !isArchivePath
-        menu.findItem(R.id.action_add_bookmark).isVisible = isDirectory
+        // Show add bookmark for both files and directories
+        menu.findItem(R.id.action_add_bookmark).isVisible = true
         holder.popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.action_open_with -> {
@@ -420,6 +431,7 @@ class FileListAdapter(
 
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()
+        val PAYLOAD_FOCUS_CHANGED = Any()
 
         private val CALLBACK = object : DiffUtil.ItemCallback<FileItem>() {
             override fun areItemsTheSame(oldItem: FileItem, newItem: FileItem): Boolean =

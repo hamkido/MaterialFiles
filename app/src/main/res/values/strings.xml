@@ -817,6 +817,44 @@
     <string name="settings_file_list_tabs_enabled_title">Enable tabs</string>
     <string name="settings_file_list_tabs_enabled_summary">Browse multiple directories in tabs (requires app restart)</string>
 
+    <!-- File Bookmarks -->
+    <string name="file_bookmark_list_title">Bookmarks</string>
+    <string name="file_bookmark_list_empty">No bookmarks</string>
+    <string name="file_bookmark_tab_all">All</string>
+    <string name="file_bookmark_tab_files">Files</string>
+    <string name="file_bookmark_tab_directories">Folders</string>
+    <string name="file_bookmark_add">Add to bookmarks</string>
+    <string name="file_bookmark_remove">Remove from bookmarks</string>
+    <string name="file_bookmark_edit">Edit bookmark</string>
+    <string name="file_bookmark_name">Name</string>
+    <string name="file_bookmark_tags">Tags</string>
+    <string name="file_bookmark_tags_helper">Comma separated</string>
+    <string name="file_bookmark_notes">Notes</string>
+    <string name="file_bookmark_show_in_sidebar">Show in sidebar</string>
+    <string name="file_bookmark_sync">Sync bookmarks</string>
+    <string name="file_bookmark_sync_success">Bookmarks synced successfully</string>
+    <string name="file_bookmark_sync_error">Sync failed</string>
+    <string name="file_bookmark_sync_conflict">Sync conflict detected</string>
+    <string name="file_bookmark_sync_conflict_message">Remote has newer changes. Keep remote or local?</string>
+    <string name="file_bookmark_sync_keep_remote">Keep remote</string>
+    <string name="file_bookmark_sync_keep_local">Keep local</string>
+    <string name="file_bookmark_sync_merge">Merge both</string>
+    <string name="file_bookmark_item_menu">Bookmark menu</string>
+    <string name="file_bookmark_added">Bookmark added</string>
+    <string name="file_bookmark_removed">Bookmark removed</string>
+    <string name="file_bookmark_open_location">Open file location</string>
+    <string name="file_bookmark_sync_settings">Sync settings</string>
+    <string name="file_bookmark_sync_enabled">Enable WebDAV sync</string>
+    <string name="file_bookmark_sync_path">Sync path</string>
+    <string name="file_bookmark_sync_path_hint">e.g., /bookmarks/</string>
+    <string name="file_bookmark_webdav_url">WebDAV URL</string>
+    <string name="file_bookmark_webdav_url_hint">e.g., https://dav.example.com/</string>
+    <string name="file_bookmark_username">Username</string>
+    <string name="file_bookmark_password">Password</string>
+    <string name="file_bookmark_export">Export bookmarks</string>
+    <string name="file_bookmark_import">Import bookmarks</string>
+    <string name="navigation_file_bookmarks">Bookmarks</string>
+
     <string name="about_title">About</string>
     <string name="about_version_title">Version</string>
     <string name="about_github_title">View on GitHub</string>

@@ -288,6 +288,17 @@ class FileListActivity : AppActivity() {
         return super.onKeyUp(keyCode, event)
     }
 
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Handle hjkl keyboard navigation (ranger-style)
+        if (event.action == KeyEvent.ACTION_DOWN && !event.isCtrlPressed && !event.isAltPressed) {
+            val fragment = getCurrentFragment()
+            if (fragment?.onKeyboardNavigation(event) == true) {
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     companion object {
         private const val STATE_TABS = "tabs"
 
