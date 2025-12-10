@@ -1,27 +1,69 @@
-name: Android CI
+name: Build APK
 
-on: [push]
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - '*.gradle'
+      - 'gradle.properties'
+      - 'Dockerfile'
+      - 'docker-build-apk.sh'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-
+  build:   
+    env:
+      NODE_OPTIONS: --use-system-ca
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.event.head_commit.message, 'Merge pull request') }}
+    outputs:
+      version: ${{ steps.set-ver.outputs.version }}
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '21'
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug lintVitalRelease
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug.apk
-        path: app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 10
+      - name: 生成版本号
+        id: set-ver
+        run: |
+          echo "version=$(date -d '8 hour' -u +1.%y.%m%d%H)" >> $GITHUB_OUTPUT
+
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: 构建 Docker 镜像
+        run: docker build -t materialfiles-builder .
+
+      - name: 构建 APK
+        run: |
+          mkdir -p apk
+          docker run --rm \
+            -v "$(pwd):/project" \
+            -v "$(pwd)/apk:/output" \
+            -e VERSION="${{ steps.set-ver.outputs.version }}" \
+            materialfiles-builder \
+            bash -c "
+              cd /project
+              ./gradlew assembleDebug --no-daemon
+              cp -f app/build/outputs/apk/debug/*.apk /output/
+            "
+
+      - name: 重命名 APK
+        run: |
+          cd apk
+          for f in *.apk; do
+            mv "$f" "MaterialFiles_${{ steps.set-ver.outputs.version }}.apk"
+          done
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: MaterialFiles.apk
+          path: apk/*.apk
+          retention-days: 30
